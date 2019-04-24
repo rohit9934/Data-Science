@@ -5,6 +5,10 @@ import numpy as np
 import nltk
 import matplotlib.pyplot as plt
 import seaborn as sn
+import re
+import pickle 
+from nltk.corpus import stopwords
+from sklearn.datasets import load_files
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
@@ -26,10 +30,29 @@ final_data= sorted_data.drop_duplicates(subset={'UserId','ProfileName','Time','T
 #HelpfulnessNumerator is present in the dataset and is the number of how much people found the review helpful
 #print(final_data['Id'].size)
 final_data= final_data[final_data.HelpfulnessNumerator<=final_data.HelpfulnessDenominator]
+y= final_data.Text
 #------------------------Bag Of Words--------------------------
 #Convert a text into a data structure like dictionary which instead of storing 364K(reviews)* 115K(vectors),storevectorsefficiently
 #CountVectorizer store count of words in vectors efficiently
 count_vect= CountVectorizer(ngram_range=(2,2))
-BOW= count_vect.fit_transform(final_data['Text'].values)
+BOW= count_vect.fit_transform(final_data['Text'].values).toarray()
+from sklearn.model_selection import train_test_split
+text_train, text_test, sent_train, sent_test = train_test_split(BOW, y , test_size = 0.20, random_state = 0)
+
+
+# Training the classifier
+from sklearn.linear_model import LogisticRegression
+classifier = LogisticRegression()
+classifier.fit(text_train,sent_train)
+
+
+# Testing model performance
+sent_pred = classifier.predict(text_test)
+
+
+from sklearn.metrics import confusion_matrix
+cm = confusion_matrix(sent_test, sent_pred)
+
+
 print(BOW.shape)
 # type of BOW vector is 'scipy.sparse.csr.csr_matrix'
